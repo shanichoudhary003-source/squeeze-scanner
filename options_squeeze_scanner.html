@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squeeze Scanner — Options Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --border-bright: rgba(255,255,255,0.15);
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --accent: #7c5cfc;
+    --accent2: #00d4aa;
+    --danger: #ff4d6d;
+    --warn: #ffb347;
+    --green: #39d98a;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .scanner-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .status-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(0,212,170,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(0,212,170,0.2);
+    letter-spacing: 0.05em;
+  }
+
+  .main-body { padding: 20px; }
+
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .ticker-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .ticker-input::placeholder { color: var(--muted); font-weight: 400; letter-spacing: 0; }
+  .ticker-input:focus { border-color: var(--accent); }
+
+  .scan-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .scan-btn:hover { opacity: 0.85; }
+  .scan-btn:active { transform: scale(0.97); }
+  .scan-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .quick-tickers {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .qtick-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .qtick {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-bright);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .qtick:hover { color: var(--text); border-color: var(--accent); background: rgba(124,92,252,0.08); }
+
+  .results-area { display: none; }
+  .results-area.visible { display: block; }
+
+  .ticker-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ticker-name {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+
+  .ticker-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .squeeze-meter { text-align: right; }
+
+  .squeeze-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .squeeze-score {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .score-low { color: var(--muted); }
+  .score-med { color: var(--warn); }
+  .score-high { color: var(--danger); }
+  .score-fire { color: var(--accent2); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .card-value { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .card-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-green { background: rgba(57,217,138,0.12); color: var(--green); border: 1px solid rgba(57,217,138,0.2); }
+  .badge-red { background: rgba(255,77,109,0.12); color: var(--danger); border: 1px solid rgba(255,77,109,0.2); }
+  .badge-amber { background: rgba(255,179,71,0.12); color: var(--warn); border: 1px solid rgba(255,179,71,0.2); }
+  .badge-teal { background: rgba(0,212,170,0.1); color: var(--accent2); border: 1px solid rgba(0,212,170,0.2); }
+
+  .full-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .prose { font-size: 13.5px; line-height: 1.7; color: var(--text); }
+
+  .entry-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+  .entry-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+  }
+
+  .entry-box-label { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+  .entry-box-val { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); }
+
+  .signal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .signal-row:last-child { border-bottom: none; }
+  .signal-name { color: var(--text); }
+  .signal-val { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+
+  .bar-wrap { width: 80px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-left: 8px; }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+  .bar-green { background: var(--green); }
+  .bar-amber { background: var(--warn); }
+  .bar-red { background: var(--danger); }
+
+  .news-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .news-item:last-child { border-bottom: none; }
+  .news-headline { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+  .news-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); display: flex; gap: 12px; align-items: center; }
+
+  .loading-state { padding: 40px 20px; text-align: center; display: none; }
+
+  .loading-spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  .loading-steps { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+
+  .loading-step { font-family: var(--mono); font-size: 11px; color: var(--muted); opacity: 0; transition: opacity 0.3s; }
+  .loading-step.active { opacity: 1; color: var(--accent2); }
+  .loading-step.done { opacity: 0.5; color: var(--green); }
+
+  .error-state {
+    padding: 32px; text-align: center;
+    font-family: var(--mono); font-size: 13px;
+    color: var(--danger); display: none;
+  }
+
+  .options-recs { display: flex; flex-direction: column; gap: 8px; }
+
+  .option-rec {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .option-rec-main { flex: 1; }
+  .option-rec-strike { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .option-rec-detail { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .option-rec-right { text-align: right; }
+  .option-rec-upside { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--green); }
+  .option-rec-risk { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  .sentiment-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 10px 0 6px; }
+  .sent-bull { background: var(--green); }
+  .sent-neu { background: var(--muted); }
+  .sent-bear { background: var(--danger); }
+
+  .sent-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  .disclaimer {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 500px) {
+    .grid-2, .grid-3, .entry-grid { grid-template-columns: 1fr 1fr; }
+    .ticker-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanner-wrap">
+  <div class="top-bar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      SQUEEZE.SCANNER
+    </div>
+    <div class="status-tag">AI-POWERED</div>
+  </div>
+
+  <div class="main-body">
+    <div class="search-row">
+      <input class="ticker-input" id="tickerInput" placeholder="Enter ticker e.g. HIMS" maxlength="8" />
+      <button class="scan-btn" id="scanBtn" onclick="runScan()">SCAN</button>
+    </div>
+
+    <div class="quick-tickers">
+      <span class="qtick-label">QUICK:</span>
+      <div class="qtick" onclick="quickScan('HIMS')">HIMS</div>
+      <div class="qtick" onclick="quickScan('ASTS')">ASTS</div>
+      <div class="qtick" onclick="quickScan('SNDK')">SNDK</div>
+      <div class="qtick" onclick="quickScan('GME')">GME</div>
+      <div class="qtick" onclick="quickScan('MSTR')">MSTR</div>
+      <div class="qtick" onclick="quickScan('RIVN')">RIVN</div>
+    </div>
+
+    <div id="loadingState" class="loading-state">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">Initialising scan...</div>
+      <div class="loading-steps">
+        <div class="loading-step" id="step1">→ Pulling live market data</div>
+        <div class="loading-step" id="step2">→ Scanning short interest & float</div>
+        <div class="loading-step" id="step3">→ Searching news & catalyst feed</div>
+        <div class="loading-step" id="step4">→ Reading social sentiment</div>
+        <div class="loading-step" id="step5">→ Modelling options entry points</div>
+      </div>
+    </div>
+
+    <div id="errorState" class="error-state"></div>
+
+    <div id="resultsArea" class="results-area">
+      <div class="ticker-header">
+        <div>
+          <div class="ticker-name" id="res-ticker">$—</div>
+          <div class="ticker-sub" id="res-company">—</div>
+        </div>
+        <div class="squeeze-meter">
+          <div class="squeeze-label">SQUEEZE SCORE</div>
+          <div class="squeeze-score" id="res-score">—</div>
+          <div id="res-score-tag"></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-label">Short Float %</div>
+          <div class="card-value" id="res-short">—</div>
+          <div class="card-sub" id="res-short-sub">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Days to Cover</div>
+          <div class="card-value" id="res-dtc">—</div>
+          <div class="card-sub">Short ratio</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Implied Volatility</div>
+          <div class="card-value" id="res-iv">—</div>
+          <div class="card-sub" id="res-iv-sub">—</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-label">Volume vs Avg</div>
+          <div class="card-value" id="res-vol">—</div>
+          <div class="card-sub" id="res-vol-sub">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Price Momentum</div>
+          <div class="card-value" id="res-price">—</div>
+          <div class="card-sub" id="res-price-sub">—</div>
+        </div>
+      </div>
+
+      <div class="full-card">
+        <div class="section-title">Squeeze signals</div>
+        <div id="signalsList"></div>
+      </div>
+
+      <div class="full-card">
+        <div class="section-title">Catalyst & news</div>
+        <div class="prose" id="res-catalyst"></div>
+        <div id="newsList" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="full-card">
+        <div class="section-title">Social sentiment</div>
+        <div class="prose" id="res-sentiment-text" style="margin-bottom:10px;"></div>
+        <div class="sentiment-bar">
+          <div class="sent-bull" id="sent-bull-bar" style="width:50%"></div>
+          <div class="sent-neu" id="sent-neu-bar" style="width:30%"></div>
+          <div class="sent-bear" id="sent-bear-bar" style="width:20%"></div>
+        </div>
+        <div class="sent-labels">
+          <span id="sent-bull-pct" style="color:var(--green)">Bullish 50%</span>
+          <span id="sent-neu-pct">Neutral 30%</span>
+          <span id="sent-bear-pct" style="color:var(--danger)">Bearish 20%</span>
+        </div>
+        <div class="prose" id="res-rumours" style="margin-top:12px;font-size:12.5px;"></div>
+      </div>
+
+      <div class="full-card">
+        <div class="section-title">Options entry strategy</div>
+        <div class="prose" id="res-options-analysis" style="margin-bottom:12px;"></div>
+        <div class="options-recs" id="optionsList"></div>
+      </div>
+
+      <div class="full-card">
+        <div class="section-title">Entry timing</div>
+        <div class="entry-grid" id="entryGrid"></div>
+        <div class="prose" id="res-timing" style="margin-top:14px;font-size:13px;"></div>
+      </div>
+
+      <div class="full-card">
+        <div class="section-title">Risk factors</div>
+        <div class="prose" id="res-risk" style="color:#ff9a9a;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    FOR INFORMATIONAL PURPOSES ONLY · NOT FINANCIAL ADVICE · OPTIONS TRADING INVOLVES SIGNIFICANT RISK OF LOSS
+  </div>
+</div>
+
+<script>
+const tickerInput = document.getElementById('tickerInput');
+const scanBtn = document.getElementById('scanBtn');
+const loadingState = document.getElementById('loadingState');
+const resultsArea = document.getElementById('resultsArea');
+const errorState = document.getElementById('errorState');
+
+tickerInput.addEventListener('keydown', e => { if (e.key === 'Enter') runScan(); });
+
+function quickScan(t) { tickerInput.value = t; runScan(); }
+
+function showLoading() {
+  loadingState.style.display = 'block';
+  resultsArea.classList.remove('visible');
+  errorState.style.display = 'none';
+  scanBtn.disabled = true;
+  const steps = ['step1','step2','step3','step4','step5'];
+  steps.forEach(s => { const el = document.getElementById(s); el.classList.remove('active','done'); });
+  let i = 0;
+  function nextStep() {
+    if (i > 0) document.getElementById(steps[i-1]).classList.replace('active','done');
+    if (i < steps.length) { document.getElementById(steps[i]).classList.add('active'); i++; setTimeout(nextStep, 900 + Math.random()*600); }
+  }
+  nextStep();
+}
+
+function hideLoading() { loadingState.style.display = 'none'; scanBtn.disabled = false; }
+
+function scoreClass(n) {
+  if (n >= 80) return 'score-fire';
+  if (n >= 60) return 'score-high';
+  if (n >= 40) return 'score-med';
+  return 'score-low';
+}
+
+function scoreBadge(n) {
+  if (n >= 80) return '<span class="badge badge-teal">HIGH CONVICTION</span>';
+  if (n >= 60) return '<span class="badge badge-red">SQUEEZE ALERT</span>';
+  if (n >= 40) return '<span class="badge badge-amber">BUILDING</span>';
+  return '<span class="badge" style="background:rgba(107,107,128,0.12);color:var(--muted);border:1px solid var(--border-bright)">LOW</span>';
+}
+
+function renderData(data, ticker) {
+  document.getElementById('res-ticker').textContent = '$' + ticker.toUpperCase();
+  document.getElementById('res-company').textContent = data.company_name || ticker.toUpperCase();
+  const score = parseInt(data.squeeze_score) || 50;
+  const scoreEl = document.getElementById('res-score');
+  scoreEl.textContent = score + '/100';
+  scoreEl.className = 'squeeze-score ' + scoreClass(score);
+  document.getElementById('res-score-tag').innerHTML = scoreBadge(score);
+  document.getElementById('res-short').textContent = data.short_float || '—';
+  document.getElementById('res-short-sub').textContent = data.short_interest_note || '';
+  document.getElementById('res-dtc').textContent = data.days_to_cover || '—';
+  document.getElementById('res-iv').textContent = data.implied_volatility || '—';
+  document.getElementById('res-iv-sub').textContent = data.iv_rank ? 'IV Rank: ' + data.iv_rank : '';
+  document.getElementById('res-vol').textContent = data.volume_ratio || '—';
+  document.getElementById('res-vol-sub').textContent = data.volume_note || '';
+  document.getElementById('res-price').textContent = data.price_change || '—';
+  document.getElementById('res-price-sub').textContent = data.price_trend || '';
+
+  const signals = data.signals || [];
+  document.getElementById('signalsList').innerHTML = signals.map(s => {
+    const pct = Math.min(100, Math.max(0, parseInt(s.strength) || 50));
+    const cls = pct >= 70 ? 'bar-green' : pct >= 40 ? 'bar-amber' : 'bar-red';
+    const col = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--warn)' : 'var(--danger)';
+    return `<div class="signal-row">
+      <span class="signal-name">${s.name}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="signal-val" style="color:${col}">${s.value}</span>
+        <div class="bar-wrap"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('res-catalyst').textContent = data.catalyst_summary || '';
+
+  const news = data.recent_news || [];
+  document.getElementById('newsList').innerHTML = news.map(n => `
+    <div class="news-item">
+      <div class="news-headline">${n.headline}</div>
+      <div class="news-meta">
+        <span>${n.source || 'News'}</span>
+        <span>${n.time || ''}</span>
+        <span class="badge ${n.impact === 'positive' ? 'badge-green' : n.impact === 'negative' ? 'badge-red' : 'badge-amber'}">${n.impact || 'neutral'}</span>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('res-sentiment-text').textContent = data.sentiment_summary || '';
+  const bull = parseInt(data.bullish_pct) || 50;
+  const bear = parseInt(data.bearish_pct) || 20;
+  const neu = Math.max(0, 100 - bull - bear);
+  document.getElementById('sent-bull-bar').style.width = bull + '%';
+  document.getElementById('sent-neu-bar').style.width = neu + '%';
+  document.getElementById('sent-bear-bar').style.width = bear + '%';
+  document.getElementById('sent-bull-pct').textContent = 'Bullish ' + bull + '%';
+  document.getElementById('sent-neu-pct').textContent = 'Neutral ' + neu + '%';
+  document.getElementById('sent-bear-pct').textContent = 'Bearish ' + bear + '%';
+  document.getElementById('res-rumours').textContent = data.rumours_themes || '';
+
+  document.getElementById('res-options-analysis').textContent = data.options_analysis || '';
+  const optRecs = data.option_recommendations || [];
+  document.getElementById('optionsList').innerHTML = optRecs.map(o => `
+    <div class="option-rec">
+      <div class="option-rec-main">
+        <div class="option-rec-strike">${o.strike_expiry}</div>
+        <div class="option-rec-detail">${o.rationale}</div>
+      </div>
+      <div class="option-rec-right">
+        <div class="option-rec-upside">${o.potential_upside}</div>
+        <div class="option-rec-risk">${o.risk_level} risk</div>
+      </div>
+    </div>`).join('');
+
+  const entries = data.entry_timing || [];
+  document.getElementById('entryGrid').innerHTML = entries.map(e => `
+    <div class="entry-box">
+      <div class="entry-box-label">${e.label}</div>
+      <div class="entry-box-val">${e.value}</div>
+    </div>`).join('');
+  document.getElementById('res-timing').textContent = data.timing_notes || '';
+  document.getElementById('res-risk').textContent = data.risk_factors || '';
+}
+
+async function runScan() {
+  const ticker = tickerInput.value.trim().toUpperCase();
+  if (!ticker) return;
+  showLoading();
+
+  const systemPrompt = `You are an elite options trading analyst specialising in short squeeze detection and momentum plays for short-dated call options (under 1 month expiry). The user is an experienced options trader hunting for 50-300% gains on events like short squeezes, catalyst-driven moves, and high-volume momentum.
+
+When given a ticker, provide a comprehensive analysis in strict JSON format only. No preamble, no explanation outside JSON.
+
+Return this exact JSON structure:
+{
+  "company_name": "Full company name and sector",
+  "squeeze_score": 75,
+  "short_float": "22.4%",
+  "short_interest_note": "High — elevated squeeze risk",
+  "days_to_cover": "4.2",
+  "implied_volatility": "68%",
+  "iv_rank": "82/100",
+  "volume_ratio": "3.4x avg",
+  "volume_note": "Unusual accumulation detected",
+  "price_change": "+8.2% (5d)",
+  "price_trend": "Breakout above key resistance",
+  "signals": [
+    {"name": "Short Interest", "value": "High", "strength": 80},
+    {"name": "Volume Surge", "value": "3.4x", "strength": 75},
+    {"name": "Options Flow", "value": "Bullish", "strength": 65},
+    {"name": "RSI Momentum", "value": "62", "strength": 60},
+    {"name": "Float Size", "value": "Low float", "strength": 70},
+    {"name": "Catalyst Present", "value": "Yes", "strength": 85}
+  ],
+  "catalyst_summary": "Detailed paragraph on what is driving this stock.",
+  "recent_news": [
+    {"headline": "Headline of recent news", "source": "Bloomberg", "time": "2 hours ago", "impact": "positive"},
+    {"headline": "Another news item", "source": "Reuters", "time": "1 day ago", "impact": "neutral"},
+    {"headline": "Third news item", "source": "WSJ", "time": "3 days ago", "impact": "positive"}
+  ],
+  "sentiment_summary": "Paragraph describing social media and retail sentiment.",
+  "bullish_pct": 68,
+  "bearish_pct": 12,
+  "rumours_themes": "What rumours, speculation, or themes are circulating online about this stock.",
+  "options_analysis": "Strategic paragraph on the options setup.",
+  "option_recommendations": [
+    {"strike_expiry": "$XX CALL — May 2 exp", "rationale": "ATM aggressive play for max leverage on breakout", "potential_upside": "+150-300%", "risk_level": "High"},
+    {"strike_expiry": "$XX CALL — Apr 25 exp", "rationale": "Near-the-money momentum play with high gamma", "potential_upside": "+80-180%", "risk_level": "Medium"},
+    {"strike_expiry": "$XX CALL — May 9 exp", "rationale": "Safer buffer for catalyst to play out", "potential_upside": "+50-100%", "risk_level": "Lower"}
+  ],
+  "entry_timing": [
+    {"label": "Ideal Entry Window", "value": "Morning dip 9:45-10:30"},
+    {"label": "Confirmation Signal", "value": "Volume > 2x by 10am"},
+    {"label": "Stop Loss Level", "value": "50% option premium"},
+    {"label": "Target Exit", "value": "100-200% gain or EOD"},
+    {"label": "Avoid Trading", "value": "Lunch 12-1:30pm EST"},
+    {"label": "Best Day", "value": "Mon/Tue on momentum"}
+  ],
+  "timing_notes": "Paragraph on when to enter — pre-market vs open, avoid low-volume windows, watch for specific triggers.",
+  "risk_factors": "Clear honest paragraph on the main risks."
+}
+
+Use your web search capability to find the most current, accurate data on this ticker. Provide realistic, informed analysis based on current market conditions.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        system: systemPrompt,
+        messages: [{ role: 'user', content: `Analyse ${ticker} for short squeeze potential and options trading opportunities. Search for the very latest news and data on this ticker right now.` }]
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error?.message || 'API error');
+
+    const textBlocks = data.content.filter(b => b.type === 'text');
+    const rawText = textBlocks.map(b => b.text).join('');
+
+    let parsed;
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON found');
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      throw new Error('Could not parse response. Try again.');
+    }
+
+    hideLoading();
+    renderData(parsed, ticker);
+    resultsArea.classList.add('visible');
+    errorState.style.display = 'none';
+
+  } catch(err) {
+    hideLoading();
+    errorState.textContent = 'ERROR: ' + (err.message || 'Scan failed. Try again.');
+    errorState.style.display = 'block';
+  }
+}
+</script>
+
+</body>
+</html>
